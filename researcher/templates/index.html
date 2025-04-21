@@ -9,15 +9,49 @@
 </head>
 
 <body>
-  <h1> Company Researcher</h1>
-
   <main class="container">
+    <h1> Company Researcher</h1>
     <form method="post">
       {% csrf_token %}
       <input type="text" placeholder="Company Name" name="company_name">
       <button>Search</button>
     </form>
+    <div id="content"></div>
+    <div id="notifications"></div>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const ws = new WebSocket("ws://localhost:8000/ws/notifications/")
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      const type = data.message.type;
+      const content = data.message.content;
+
+      if (type === "notification") {
+        const notifContainer = document.getElementById("notifications");
+
+        const newNotif = document.createElement("div");
+        newNotif.innerHTML = content;
+        notifContainer.append(newNotif);
+      }
+
+      if (type === "business_profile") {
+        document.getElementById("content").innerHTML = marked.parse(content);
+        document.getElementById("notifications").innerHTML = "";
+      }
+    };
+
+    ws.onopen = () => {
+      console.log("Connected");
+    };
+
+    ws.onclose = () => {
+      console.log("Disconnected");
+    };
+  </script>
 </body>
 
 </html>
